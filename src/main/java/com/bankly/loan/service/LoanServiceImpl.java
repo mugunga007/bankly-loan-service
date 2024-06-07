@@ -59,4 +59,9 @@ public class LoanServiceImpl implements ILoanService{
     DoublePredicate isEligible = loanAmount->loanAmount <(balance * 5);
     return isEligible.test(loan);
   }
+  @Override
+  public List<Loan> getLoans() {
+    // TODO Auto-generated method stub
+    return loanRepository.findAll();
+  }
 }

@@ -11,6 +11,7 @@
 	<groupId>com.bankly</groupId>
 	<artifactId>loan</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
 	<name>loan</name>
 	<description>Demo project for Spring Boot</description>
 	<properties>
@@ -73,21 +74,28 @@
 			<artifactId>spring-boot-starter-webflux</artifactId>
 		</dependency>
 		
-<!-- <dependency>                             
-    <groupId>org.slf4j</groupId>         
-    <artifactId>slf4j-api</artifactId>   
-    <version>1.7.30</version>  
-</dependency> 
-                       
-<dependency>                             
-    <groupId>org.slf4j</groupId>         
-    <artifactId>slf4j-simple</artifactId>
-    <version>1.7.30</version>  
-</dependency> -->
 	</dependencies>
 
 	<build>
 		<plugins>
+		<plugin>
+        <groupId>com.google.cloud.tools</groupId>
+        <artifactId>jib-maven-plugin</artifactId>
+        <version>3.4.1</version>
+				 <executions>
+    					<execution>
+      					<phase>package</phase>
+     					  <goals>
+        					<goal>build</goal>
+      					</goals>
+    					</execution>
+  					</executions>
+        <configuration>
+          <to>
+            <image>mugunga/${project.artifactId}:v1</image>
+          </to>
+        </configuration>
+      </plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
