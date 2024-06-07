@@ -28,8 +28,7 @@ public class AccountsApi {
 
   private static final Logger logger= LoggerFactory.getLogger(AccountsApi.class);
   public AccountsApi(@Value("${api.accountsUrl}") String accountsUrl) {
-     // this.webClient = WebClient.builder().baseUrl(accountsUrl).build();
-      this.webClient = WebClient.builder().baseUrl("http://localhost:8095/api/v1/customer").build();
+      this.webClient = WebClient.builder().baseUrl(accountsUrl).build();
   }
  
   public Mono<Integer> getCustomerIdByEmail(String email) {
