@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: loan
+  config:
+    import: configserver:http://configserver-service:8071/
+  profiles:
+    active: "dit"
+      
+  rabbitmq:
+    host: "rabbitmq"
+    port: 5672
+    username: "guest"
+    password: "guest"

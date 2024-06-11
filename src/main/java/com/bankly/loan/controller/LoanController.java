@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bankly.loan.constants.Constants;
+import com.bankly.loan.dto.EnvPropertiesDto;
 import com.bankly.loan.dto.LoanDto;
 import com.bankly.loan.dto.ResponseDto;
 import com.bankly.loan.entity.Loan;
@@ -23,8 +24,8 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping(path = "api/v1/loan")
 @RequiredArgsConstructor
 public class LoanController {
-  public final @NonNull ILoanService loanService;
-
+  private final @NonNull ILoanService loanService;
+  private final @NonNull EnvPropertiesDto envPropertiesDto;
   @PostMapping
   public ResponseEntity<ResponseDto> createLoan(@RequestBody LoanDto loanDto){
     loanService.createLoan(loanDto);
@@ -50,5 +51,16 @@ public class LoanController {
         .build());
 
   }
+
+  @GetMapping("/info")
+public ResponseEntity<ResponseDto<Object>> getInfo(){
+  return ResponseEntity.status(HttpStatus.OK)
+          .body(ResponseDto.builder()
+                .status(HttpStatus.OK.value())
+                .result(Constants.SUCCEEDED)
+                .data(envPropertiesDto)
+                .build())
+                ;
+}
 
 }

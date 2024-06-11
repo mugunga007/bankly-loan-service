@@ -6,12 +6,14 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.bankly.loan.dto.CustomerAccountsResponse;
+import com.bankly.loan.dto.EnvPropertiesDto;
 import com.bankly.loan.dto.ResponseDto;
 import com.bankly.loan.exceptions.CustomerNotFoundException;
 import com.bankly.loan.model.Account;
@@ -19,6 +21,8 @@ import com.bankly.loan.model.Customer;
 import com.bankly.loan.service.LoanServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -26,12 +30,19 @@ import reactor.core.publisher.Mono;
 public class AccountsApi {
   private final WebClient webClient;
 
+  
+  private final EnvPropertiesDto envPropertiesDto;
   private static final Logger logger= LoggerFactory.getLogger(AccountsApi.class);
-  public AccountsApi(@Value("${api.accountsUrl}") String accountsUrl) {
-      this.webClient = WebClient.builder().baseUrl(accountsUrl).build();
+  
+  public AccountsApi(EnvPropertiesDto envPropertiesDto) {
+      this.envPropertiesDto = envPropertiesDto;
+      this.webClient = WebClient.builder().baseUrl(
+      envPropertiesDto.getAccountsApiUrl()
+        ).build();
   }
  
   public Mono<Integer> getCustomerIdByEmail(String email) {
+    logger.info("Account url --------> {}",envPropertiesDto.getAccountsApiUrl());
       return webClient.get()
               .uri(uriBuilder -> uriBuilder
                     .path("/customer_id")
@@ -48,6 +59,7 @@ public class AccountsApi {
   }
 
   public Mono<Customer> getCustomerAccounts(Long customerId) {
+    logger.info("Account url --------> {}",envPropertiesDto.getAccountsApiUrl());
     return webClient.get()
             .uri(uriBuilder ->uriBuilder
                 .path("/accounts")
