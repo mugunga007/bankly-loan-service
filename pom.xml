@@ -106,24 +106,6 @@
 
 	<build>
 		<plugins>
-		<plugin>
-        <groupId>com.google.cloud.tools</groupId>
-        <artifactId>jib-maven-plugin</artifactId>
-        <version>3.4.1</version>
-				 <executions>
-    					<execution>
-      					<phase>package</phase>
-     					  <goals>
-        					<goal>build</goal>
-      					</goals>
-    					</execution>
-  					</executions>
-        <configuration>
-          <to>
-            <image>mugunga/${project.artifactId}:v1</image>
-          </to>
-        </configuration>
-      </plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
