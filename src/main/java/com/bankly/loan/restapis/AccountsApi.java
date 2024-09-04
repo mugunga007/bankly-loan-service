@@ -34,15 +34,13 @@ public class AccountsApi {
   private final EnvPropertiesDto envPropertiesDto;
   private static final Logger logger= LoggerFactory.getLogger(AccountsApi.class);
   
-  public AccountsApi(EnvPropertiesDto envPropertiesDto) {
+  public AccountsApi(WebClient.Builder webClientBuilder, EnvPropertiesDto envPropertiesDto) {
       this.envPropertiesDto = envPropertiesDto;
-      this.webClient = WebClient.builder().baseUrl(
-      envPropertiesDto.getAccountsApiUrl()
-        ).build();
+      this.webClient = webClientBuilder.baseUrl(envPropertiesDto.getAccountsApiUrl()).build();
   }
  
   public Mono<Integer> getCustomerIdByEmail(String email) {
-    logger.info("Account url --------> {}",envPropertiesDto.getAccountsApiUrl());
+    logger.info("Fetching customer Id form email: {}",email);
       return webClient.get()
               .uri(uriBuilder -> uriBuilder
                     .path("/customer_id")
@@ -50,11 +48,12 @@ public class AccountsApi {
                     .build())
               .retrieve()
               .bodyToMono(ResponseDto.class)
-              .map(response -> {
+              .flatMap(response -> {
                 if (response.getData() == null) {
-                    throw new CustomerNotFoundException("Customer ID is null");
+                  logger.error("Customer not found for email: {}", email);
+                  return Mono.error(new CustomerNotFoundException("Customer does not exist!"));
                 }
-                return (int) response.getData();
+                return Mono.just((int) response.getData());
             });
   }
 
@@ -69,8 +68,11 @@ public class AccountsApi {
             .bodyToMono(
               new ParameterizedTypeReference<ResponseDto<List<Account>>>(){}
               //String.class
-              ).map(response -> new Customer(response.getData()));
+              ).map(response -> new Customer(response.getData()))
+              .doOnError(e->logger.error("Error fetching customer account for ID: {}", customerId, e));
 
 }
+
+
 
 }

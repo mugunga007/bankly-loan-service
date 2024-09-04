@@ -6,6 +6,7 @@ import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.bankly.loan.dto.LoanDto;
@@ -36,32 +37,46 @@ public class LoanServiceImpl implements ILoanService{
   public Loan createLoan(LoanDto loanDto) {
     // Step 1: Validate loanDto (assuming ValidationUtils.validate performs necessary checks)
     ValidationUtils.validate(loanDto);
-     Long customerId = Long.valueOf(accountsApi.getCustomerIdByEmail(loanDto.getCustomerEmail()).block());
-    logger.info("Customer id received");
-    Customer r =accountsApi.getCustomerAccounts(customerId).block();
-    
-    logger.info(String.valueOf(r.getAccounts().size()));
-   return accountsApi.getCustomerAccounts(customerId)
-    .map(customer -> {
-    double balance = customer.getAccounts()
-                        .stream()
-                        .mapToDouble(Account::getBalance)
-                        .sum();
-      logger.info(String.valueOf(balance));
-      if(!checkEligibility(balance, loanDto.getTotalLoan()))
-        throw new RuntimeException("Not eligible");
-      return LoanMapper.mapToLoan(loanDto);
+
+ 
+    return accountsApi.getCustomerIdByEmail(loanDto.getCustomerEmail())
+    .flatMap((Integer customerId) -> accountsApi.getCustomerAccounts(Long.valueOf(customerId)))
+    .flatMap((Customer customer) -> {
+        double balance = calculateTotalBalance(customer);
+
+        if (!isEligibleForLoan(balance, loanDto.getTotalLoan())) {
+            logger.warn("Customer not eligible for the loan");
+            return Mono.error(new RuntimeException("Customer Not eligible for this loan"));
+        }
+
+        Loan loan = LoanMapper.mapToLoan(loanDto);
+        return Mono.just(loan);
     })
-    .map(loanRepository::save)
+    .map(loanRepository::save) // Convert the result to Mono<Void>
+    .doOnSuccess(unused -> logger.info("Loan created successfully for customer with email: {}", loanDto.getCustomerEmail()))
+    .doOnError(e -> logger.error("Error creating loan for customer with email: {}", loanDto.getCustomerEmail(), e))
     .block();
+
+                
+    }        
+
+  
+
+  private double calculateTotalBalance(Customer customer){
+    return customer.getAccounts()
+            .stream()
+            .mapToDouble(Account::getBalance)
+            .sum();
   }
-  private boolean checkEligibility(double balance, double loan){
+  private boolean isEligibleForLoan(double balance, double loan){
     DoublePredicate isEligible = loanAmount->loanAmount <(balance * 5);
     return isEligible.test(loan);
   }
   @Override
   public List<Loan> getLoans() {
     // TODO Auto-generated method stub
-    return loanRepository.findAll();
+    return loanRepository.findAll(Sort.by(
+      Sort.Order.desc("createdAt")
+    ));
   }
 }
