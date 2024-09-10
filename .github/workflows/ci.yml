@@ -50,3 +50,4 @@ jobs:
       with:
         push: true
         tags: mugunga/loan:v1
+        no-cache: true
