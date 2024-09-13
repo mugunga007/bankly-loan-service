@@ -9,15 +9,4 @@ spring:
     active:
       - dit
 
-  cloud:
-    stream:
-      bindings:
-        sendCommunication-out-0:
-          destination: send-communication   
-  rabbitmq:
-    host: "rabbitmq-service"
-    port: 5672
-    username: "guest"
-    password: "guest"
     
-defaultBranchId: 1000
