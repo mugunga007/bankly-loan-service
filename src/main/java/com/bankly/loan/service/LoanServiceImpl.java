@@ -34,9 +34,9 @@ public class LoanServiceImpl implements ILoanService{
   
   private final @NonNull AccountsApi accountsApi;
   private final @NonNull LoanRepository loanRepository;
-  private final EnvPropertiesDto envPropertiesDto;
+  private final @NonNull EnvPropertiesDto envPropertiesDto;
   private static final Logger logger= LoggerFactory.getLogger(LoanServiceImpl.class);
-   private final StreamBridge streamBridge;
+  private final StreamBridge streamBridge;
   
    @Override
   public Loan createLoan(LoanDto loanDto) {
