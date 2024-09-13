@@ -16,4 +16,5 @@ public class EnvPropertiesDto {
     private Map<String, String> contactDetails;
     private List<String> onCallSupport;
     private String accountsApiUrl;
+    private Long defaultBranchId;
 }

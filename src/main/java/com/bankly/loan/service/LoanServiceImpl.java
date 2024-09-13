@@ -6,9 +6,12 @@ import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import com.bankly.loan.dto.AccountsMsgDto;
+import com.bankly.loan.dto.EnvPropertiesDto;
 import com.bankly.loan.dto.LoanDto;
 import com.bankly.loan.dto.ResponseDto;
 import com.bankly.loan.entity.Loan;
@@ -31,16 +34,19 @@ public class LoanServiceImpl implements ILoanService{
   
   private final @NonNull AccountsApi accountsApi;
   private final @NonNull LoanRepository loanRepository;
-
+  private final EnvPropertiesDto envPropertiesDto;
   private static final Logger logger= LoggerFactory.getLogger(LoanServiceImpl.class);
-  @Override
+   private final StreamBridge streamBridge;
+  
+   @Override
   public Loan createLoan(LoanDto loanDto) {
     // Step 1: Validate loanDto (assuming ValidationUtils.validate performs necessary checks)
     ValidationUtils.validate(loanDto);
 
- 
-    return accountsApi.getCustomerIdByEmail(loanDto.getCustomerEmail())
-    .flatMap((Integer customerId) -> accountsApi.getCustomerAccounts(Long.valueOf(customerId)))
+    Long customerId = Long.valueOf(accountsApi.getCustomerIdByEmail(loanDto.getCustomerEmail())
+                        .block());
+    
+    Loan l = accountsApi.getCustomerAccounts(Long.valueOf(customerId))
     .flatMap((Customer customer) -> {
         double balance = calculateTotalBalance(customer);
 
@@ -48,19 +54,31 @@ public class LoanServiceImpl implements ILoanService{
             logger.warn("Customer not eligible for the loan");
             return Mono.error(new RuntimeException("Customer Not eligible for this loan"));
         }
-
+        
         Loan loan = LoanMapper.mapToLoan(loanDto);
+
+        
         return Mono.just(loan);
+
     })
     .map(loanRepository::save) // Convert the result to Mono<Void>
     .doOnSuccess(unused -> logger.info("Loan created successfully for customer with email: {}", loanDto.getCustomerEmail()))
     .doOnError(e -> logger.error("Error creating loan for customer with email: {}", loanDto.getCustomerEmail(), e))
     .block();
 
-                
+    sendCommunication(customerId, l);
+
+    return l;         
     }        
 
   
+  private void sendCommunication(Long customerId, Loan loan){
+    var accountsMsgDto = new AccountsMsgDto(loan.getLoanType(),
+     envPropertiesDto.getDefaultBranchId(), customerId);
+    logger.info("data to send {}", accountsMsgDto);
+    var result = streamBridge.send("sendCommunication-out-O",accountsMsgDto);
+    logger.info("was the data sent successful ? {}", result);
+  }
 
   private double calculateTotalBalance(Customer customer){
     return customer.getAccounts()
