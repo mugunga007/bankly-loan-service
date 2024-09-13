@@ -51,7 +51,7 @@ public class LoanController {
       .status(HttpStatus.OK)
       .body(ResponseDto.builder()
         .status(HttpStatus.OK.value())
-        .message(Constants.SUCCEEDED)
+        .message(Constants.SUCCEEDED+" !")
         .count(String.valueOf(list.size()))
         .data(list)
         .build());
