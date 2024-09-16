@@ -76,7 +76,7 @@ public class LoanServiceImpl implements ILoanService{
     var accountsMsgDto = new AccountsMsgDto(loan.getLoanType(),
      envPropertiesDto.getDefaultBranchId(), customerId);
     logger.info("data to send {}", accountsMsgDto);
-    var result = streamBridge.send("sendCommunication-out-O",accountsMsgDto);
+    var result = streamBridge.send(envPropertiesDto.getBindingsCreateAccount(),accountsMsgDto);
     logger.info("was the data sent successful ? {}", result);
   }
 

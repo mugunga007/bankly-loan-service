@@ -17,4 +17,5 @@ public class EnvPropertiesDto {
     private List<String> onCallSupport;
     private String accountsApiUrl;
     private Long defaultBranchId;
+    private String bindingsCreateAccount;
 }
