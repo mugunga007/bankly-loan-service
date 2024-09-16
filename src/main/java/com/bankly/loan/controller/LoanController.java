@@ -20,6 +20,7 @@ import com.bankly.loan.dto.ResponseDto;
 import com.bankly.loan.entity.Loan;
 import com.bankly.loan.service.ILoanService;
 
+import io.micrometer.observation.annotation.Observed;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -33,6 +34,7 @@ public class LoanController {
   private static final Logger log = LoggerFactory.getLogger(LoanController.class);
  
   @PostMapping
+  @Observed
   public ResponseEntity<ResponseDto> createLoan(@RequestBody LoanDto loanDto){
     loanService.createLoan(loanDto);
     return ResponseEntity
@@ -45,6 +47,7 @@ public class LoanController {
   }
 
   @GetMapping
+  @Observed
   public ResponseEntity<ResponseDto<Object>> getLoans(){
     List<Loan> list = loanService.getLoans();
     return ResponseEntity
