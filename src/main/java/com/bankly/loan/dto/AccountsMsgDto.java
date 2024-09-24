@@ -1,5 +1,5 @@
 package com.bankly.loan.dto;
 
-public record AccountsMsgDto(String accountType, Long branchId, Long primaryAccountHolder) {
+public record AccountsMsgDto(String accountType, Long branchId, Long primaryAccountHolder, double balance) {
   
 }
