@@ -23,6 +23,7 @@ import com.bankly.loan.service.ILoanService;
 import io.micrometer.observation.annotation.Observed;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping(path = "api/v1/loan")
@@ -35,14 +36,14 @@ public class LoanController {
  
   @PostMapping
   @Observed
-  public ResponseEntity<ResponseDto> createLoan(@RequestBody LoanDto loanDto){
-    loanService.createLoan(loanDto);
-    return ResponseEntity
+  public Mono<ResponseEntity<ResponseDto>> createLoan(@RequestBody LoanDto loanDto){
+    return loanService.createLoan(loanDto)
+        .map(loan -> ResponseEntity
             .status(HttpStatus.CREATED)
             .body(ResponseDto.builder()
               .status(HttpStatus.CREATED.value())
               .message(Constants.SUCCEEDED)
-              .build());
+              .build()));
           
   }
 

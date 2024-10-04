@@ -38,47 +38,44 @@ public class LoanServiceImpl implements ILoanService{
   private static final Logger logger= LoggerFactory.getLogger(LoanServiceImpl.class);
   private final StreamBridge streamBridge;
   
-   @Override
-  public Loan createLoan(LoanDto loanDto) {
-    // Step 1: Validate loanDto (assuming ValidationUtils.validate performs necessary checks)
-    ValidationUtils.validate(loanDto);
-
-    Long customerId = Long.valueOf(accountsApi.getCustomerIdByEmail(loanDto.getCustomerEmail())
-                        .block());
-    
-    Loan l = accountsApi.getCustomerAccounts(Long.valueOf(customerId))
-    .flatMap((Customer customer) -> {
-        double balance = calculateTotalBalance(customer);
-
-        if (!isEligibleForLoan(balance, loanDto.getTotalLoan())) {
-            logger.warn("Customer not eligible for the loan");
-            return Mono.error(new RuntimeException("Customer Not eligible for this loan"));
-        }
-        
-        Loan loan = LoanMapper.mapToLoan(loanDto);
-
-        
-        return Mono.just(loan);
-
-    })
-    .map(loanRepository::save) // Convert the result to Mono<Void>
-    .doOnSuccess(unused -> logger.info("Loan created successfully for customer with email: {}", loanDto.getCustomerEmail()))
-    .doOnError(e -> logger.error("Error creating loan for customer with email: {}", loanDto.getCustomerEmail(), e))
-    .block();
-
-    sendCommunication(customerId, l);
-
-    return l;         
-    }        
-
   
-  private void sendCommunication(Long customerId, Loan loan){
-    var accountsMsgDto = new AccountsMsgDto(loan.getLoanType(),
-     envPropertiesDto.getDefaultBranchId(), customerId, loan.getTotalLoan());
-    logger.info("data to send {}", accountsMsgDto);
-    var result = streamBridge.send(envPropertiesDto.getBindingsCreateAccount(),accountsMsgDto);
-    logger.info("was the data sent successful ? {}", result);
+  @Override
+  public Mono<Loan> createLoan(LoanDto loanDto) {
+      ValidationUtils.validate(loanDto);
+  
+      // Step 2: Fetch customerId asynchronously
+      return accountsApi.getCustomerIdByEmail(loanDto.getCustomerEmail())
+          .flatMap(customerId -> 
+              // Step 3: Fetch customer accounts and process the loan
+              accountsApi.getCustomerAccounts(Long.valueOf(customerId))
+                  .flatMap(customer -> {
+                      double balance = calculateTotalBalance(customer);
+  
+                      // Step 4: Validate loan eligibility
+                      if (!isEligibleForLoan(balance, loanDto.getTotalLoan())) {
+                          logger.warn("Customer not eligible for the loan");
+                          return Mono.error(new RuntimeException("Customer Not eligible for this loan"));
+                      }
+                      
+                      Loan loan = LoanMapper.mapToLoan(loanDto);
+                      
+                      // Step 5: Save the loan in the database (reactively)
+                      return Mono.just(loanRepository.save(loan))
+                          .doOnSuccess(savedLoan -> sendCommunication(Long.valueOf(customerId), savedLoan)); // Send communication after saving the loan
+                  })
+          )
+          .doOnSuccess(loan -> logger.info("Loan created successfully for customer with email: {}", loanDto.getCustomerEmail()))
+          .doOnError(e -> logger.error("Error creating loan for customer with email: {}", loanDto.getCustomerEmail(), e));
   }
+  
+  private void sendCommunication(Long customerId, Loan loan) {
+      var accountsMsgDto = new AccountsMsgDto(loan.getLoanType(),
+       envPropertiesDto.getDefaultBranchId(), customerId, loan.getTotalLoan());
+      logger.info("data to send {}", accountsMsgDto);
+      var result = streamBridge.send(envPropertiesDto.getBindingsCreateAccount(), accountsMsgDto);
+      logger.info("was the data sent successful ? {}", result);
+  }
+  
 
   private double calculateTotalBalance(Customer customer){
     return customer.getAccounts()
