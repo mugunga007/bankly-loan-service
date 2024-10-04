@@ -17,7 +17,7 @@ public class SecurityConfig {
     serverHttpSecurity.authorizeExchange(exchanges->
                       exchanges
                       .pathMatchers(HttpMethod.GET).permitAll()
-                      .pathMatchers("/loan/**").authenticated())
+                      .pathMatchers("/api/v1/loan/**").authenticated())
                       .oauth2ResourceServer(oAuth2ResourceServerSpec->
                                             oAuth2ResourceServerSpec
                                             .jwt(Customizer.withDefaults()));
