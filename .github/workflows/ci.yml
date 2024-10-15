@@ -49,6 +49,6 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         push: true
-        tags: mugunga/loan:v1
+        tags: mugunga/bankly-loan-service:v1
         no-cache: true
         context: .
