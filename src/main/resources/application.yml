@@ -1,6 +1,6 @@
 spring:
   application:
-    name: loan
+    name: bankly-loan-service
   config:
     import: 
       - configserver:http://configserver-service:8071/
